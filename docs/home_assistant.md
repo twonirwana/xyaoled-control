@@ -7,7 +7,7 @@ as a device with:
 - a **light** entity — panel power on/off and brightness,
 - a **button** entity — clear the screen and the on-device playlist,
 - a **notify** entity — `notify.send_message` shows the message as text on the panel
-  (auto-scrolls when it is wider than 64px),
+  (auto-scrolls when it is wider than 32px),
 - a **switch** entity ("Clock") — while on, the panel shows the current time,
   updated every minute; survives Home Assistant restarts,
 - an **image** entity ("Preview") — an upscaled picture of whatever was last sent

@@ -1,6 +1,6 @@
 # xyaoled-control
 
-Unofficial Python library and CLI to drive **"XYAO-LED" style 64x16 RGB BLE pixel
+Unofficial Python library and CLI to drive **"XYAO-LED" style 32x16 RGB BLE pixel
 matrices** (the kind controlled by the *XYAO LED* phone app, advertised name
 `XyaoLED...`) directly over Bluetooth Low Energy — no app required.
 
@@ -14,7 +14,7 @@ This project is not affiliated with or endorsed by the device vendor.
 
 - Static text, multi-page text, smooth device-side scrolling text (any colour, any font)
 - Single-colour pixel art from an image file or built-in patterns
-- Full-colour images (any picture, fitted to 64x16)
+- Full-colour images (any picture, fitted to 32x16)
 - Animations from an animated GIF
 - Power, brightness, clear-screen/playlist
 - A capture parser for inspecting your own device's BLE traffic

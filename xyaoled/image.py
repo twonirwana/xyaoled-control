@@ -1,4 +1,4 @@
-"""Single-colour pixel graphics: an image file or a built-in pattern -> 64x16 (1bpp)."""
+"""Single-colour pixel graphics: an image file or a built-in pattern -> 32x16 (1bpp)."""
 import argparse
 import asyncio
 import math
@@ -47,7 +47,8 @@ def p_heart():
 
 def p_hearts():
     g = p_blank()
-    for cx in (11, 32, 53):
+    # Two hearts centered at x=8 and x=24 for a 32px width
+    for cx in (W // 4, (3 * W) // 4):
         h = _heart(cx, 4.0)
         for r in range(H):
             for c in range(W):
@@ -76,7 +77,8 @@ def p_invaders():
     art = ["  X     X  ", "   X   X   ", "  XXXXXXX  ", " XX XXX XX ",
            "XXXXXXXXXXX", "X XXXXXXX X", "X X     X X", "   XX XX   "]
     g = p_blank()
-    for bx in (10, 32, 53):
+    # Two 11px-wide invaders centered at x=8 and x=24 for a 32px width
+    for bx in (W // 4, (3 * W) // 4):
         for ry, line in enumerate(art):
             for cx, ch in enumerate(line):
                 r, c = 4 + ry, bx + cx - len(line) // 2

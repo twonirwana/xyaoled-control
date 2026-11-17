@@ -40,7 +40,7 @@ async def _wait(event: asyncio.Event, timeout: float) -> None:
 
 
 class XyaoLedPanel:
-    """One 64x16 panel; serializes commands and manages the BLE session."""
+    """One 32x16 panel; serializes commands and manages the BLE session."""
 
     def __init__(self, hass: HomeAssistant, address: str, init_hex: str | None = None) -> None:
         self._hass = hass

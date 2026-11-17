@@ -108,7 +108,7 @@ def pack_bitmap(grid: list[list[int]]) -> bytes:
 
 def mono_cmds(grids: list[list[list[int]]], rgb: tuple[int, int, int], seq: int,
               dur: int = 0x3C, scroll: bool = False) -> list[bytes]:
-    """1-bit image in a single colour. grids: list of 16x64 grids -> [colour, image]."""
+    """1-bit image in a single colour. grids: list of 16x32 grids -> [colour, image]."""
     n = len(grids)
     if not 1 <= n <= MAX_MONO_FRAMES:
         raise ValueError(f"mono image supports 1..{MAX_MONO_FRAMES} frames, got {n}")

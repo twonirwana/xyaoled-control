@@ -1,5 +1,5 @@
 """
-xyaoled — unofficial BLE control library for XYAO-LED style 64x16 pixel matrices.
+xyaoled — unofficial BLE control library for XYAO-LED style 32x16 pixel matrices.
 
 Run the tools as modules, e.g.:
     python -m xyaoled.text "HELLO" --color 0,255,0 --scroll

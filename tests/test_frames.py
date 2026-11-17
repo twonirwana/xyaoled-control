@@ -161,7 +161,7 @@ def test_parse_status():
                              "custom_components", "xyaoled", "protocol.py"), "ven_status")
     frame = bytes([0x88, 0xFF, 0x00, 0x05, 0x01, 0x02, 64, 0, 16, 0, 0x04, 0x01])
     status = ven.parse_status(frame)
-    assert status == {"width": 64, "height": 16, "power": True}
+    assert status == {"width": 32, "height": 16, "power": True}
     assert ven.parse_status(frame[:-1] + bytes([0x02]))["power"] is False
     assert ven.parse_status(b"\x88\xff\x05\x01") is None  # image-done, not status
     assert ven.parse_status(b"") is None

@@ -1,4 +1,4 @@
-"""Render text to the 64x16 panel: static, paginated, or hardware-scrolled.
+"""Render text to the 32x16 panel: static, paginated, or hardware-scrolled.
 
 The panel's text/bitmap format is 1 bit per pixel plus a single RGB colour.
 """
@@ -11,18 +11,20 @@ from PIL import Image, ImageDraw, ImageFont
 from . import core
 from .core import W, H, frame
 
-# Fixed bytes of the mono image payload (see PROTOCOL.md). Only the frame count
-# (offset 9), the mode (offset 11), the colour (offsets 16-18) and the scroll
-# flag / speed (offsets 22-23) vary.
-PL_HEAD = bytes([0x8C, 0x00, 0x00, 0x02, 0x00, 0x02, 0x01, 0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00])
+BYTES_PER_ROW = W // 8                # 4 bytes for 32px width
+BYTES_PER_FRAME = H * BYTES_PER_ROW   # 64 bytes per 32x16 frame
+
+# Fixed bytes of the mono image payload (see PROTOCOL.md).
+# Note: Bytes at index 3 and 5 (0x02, 0x00, 0x02) may represent width/module count
+# on some firmware versions. If the image appears split or shifted, try changing
+# those two 0x02 bytes to 0x01.
+PL_HEAD = bytes([0x4C, 0x00, 0x00, 0x02, 0x00, 0x02, 0x01, 0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00])
 PL_MID = bytes([0x00, 0x00, 0xFF, 0x00, 0x3C, 0x00])
 COLOR_CMD_PARAMS = bytes([0xFF, 0x00])
 
-# A mono image is a single 0x0207 frame, so it must fit the 10000-byte cap:
-# 11-byte wrapper + 25-byte payload header + 128 bytes per bitmap frame.
-MAX_MONO_FRAMES = (10000 - 11 - 25) // 128  # 77
+# 11-byte wrapper + 25-byte payload header + BYTES_PER_FRAME (64) per bitmap frame.
+MAX_MONO_FRAMES = (10000 - 11 - 25) // BYTES_PER_FRAME  # 155
 
-# Common monospace fonts to try (any TrueType works; falls back to PIL default).
 FONTS = [
     "/System/Library/Fonts/Monaco.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
@@ -65,11 +67,7 @@ def _render_wide(text, size, font_path, pad_left=0):
 
 
 def render_pages(text, size, font_path):
-    """Split a long string into 64px pages at word boundaries (like the app).
-
-    The size is reduced until the widest single word fits, so no page is
-    ever clipped and all pages share one consistent font size.
-    """
+    """Split a long string into 32px pages at word boundaries."""
     d = ImageDraw.Draw(Image.new("1", (8, 8)))
     words = text.split() or [text]
     while size > 6:
@@ -93,7 +91,7 @@ def render_pages(text, size, font_path):
 
 
 def render_strip(text, size, font_path, lead=2, trail=W):
-    """A wide N*64px strip the device scrolls itself (do NOT pre-shift frames)."""
+    """A wide N*32px strip the device scrolls itself."""
     img = _render_wide(text, size, font_path, pad_left=lead)
     n = max(1, (img.width + trail + W - 1) // W)
     canvas = Image.new("1", (n * W, H), 0)
@@ -102,17 +100,17 @@ def render_strip(text, size, font_path, lead=2, trail=W):
 
 
 def pack_bitmap(grid):
-    """16 rows x 8 bytes, LSB-first: column = byte_index*8 + bit_index."""
-    out = bytearray(H * 8)
+    """16 rows x 4 bytes (for 32px width), LSB-first: column = byte_index*8 + bit_index."""
+    out = bytearray(BYTES_PER_FRAME)
     for r in range(H):
         for c in range(W):
             if grid[r][c]:
-                out[r * 8 + (c // 8)] |= 1 << (c % 8)
+                out[r * BYTES_PER_ROW + (c // 8)] |= 1 << (c % 8)
     return bytes(out)
 
 
 def build_mono(frames, rgb, seq, dur=0x3C, scroll=False):
-    """frames: list of 16x64 grids. Returns [colour_cmd, image_cmd]."""
+    """frames: list of 16x32 grids. Returns [colour_cmd, image_cmd]."""
     n = len(frames)
     if not 1 <= n <= MAX_MONO_FRAMES:
         raise ValueError(f"mono image supports 1..{MAX_MONO_FRAMES} frames, got {n}")
@@ -123,7 +121,7 @@ def build_mono(frames, rgb, seq, dur=0x3C, scroll=False):
     head = bytearray(PL_HEAD)
     head[9] = n
     head[11] = 0x00 if scroll else 0x03
-    sub = 12 + n * 128
+    sub = 12 + n * BYTES_PER_FRAME
     head[0], head[1] = sub & 0xFF, (sub >> 8) & 0xFF
     mid = bytearray(PL_MID)
     mid[3] = 0x01 if scroll else 0x00
@@ -138,7 +136,7 @@ def _ascii(grid):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Show text on a XYAO-LED 64x16 panel.")
+    ap = argparse.ArgumentParser(description="Show text on a XYAO-LED 32x16 panel.")
     ap.add_argument("text", nargs="+")
     ap.add_argument("--color", type=core.parse_color, default="255,0,0", help="R,G,B (0..255)")
     ap.add_argument("--size", type=int, default=14)
@@ -173,7 +171,6 @@ def main(argv=None):
         ap.error(str(e))
 
     if a.scroll and not a.no_black_first:
-        # static black first hides the previous screen scrolling out
         black = [[0] * W for _ in range(H)]
         cmds = build_mono([black], [0, 0, 0], 1, dur=0x05) + cmds
 
